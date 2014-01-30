@@ -1,0 +1,89 @@
+<script>
+Ext.onReady(function() {
+  Ext.define('User', {
+      extend: 'Ext.data.Model',
+      fields: [ 'id', 'name', 'email' ],
+      idProperty: 'id'
+  });
+  console.log('model created');
+  var newid = 0;
+   var userStore = new Ext.data.Store({
+       autoLoad: true,
+       autoSync: true,     
+       model: 'User',
+       proxy: {
+         type: 'rest',
+         headers: {
+           'X-CSRF-Token':  $('meta[name="csrf-token"]').attr('content')
+         },
+         url: '/users',
+         reader: {
+           type: 'json',
+           root: 'users'
+         },
+         writer: {                
+           type: 'json'                
+         },
+       },
+   });
+ 
+  var rowEditing = Ext.create('Ext.grid.plugin.RowEditing');    
+     
+  var grid = Ext.create('Ext.grid.Panel', {
+      renderTo: Ext.getBody(),
+      store: userStore,
+      width: 400,
+      height: 200,
+      title: 'Application Users',
+      columnLines: true, 
+      frame: true,
+      selType: 'rowmodel',
+      plugins: [ rowEditing ],     
+      iconCls: 'icon-grid',
+      dockedItems: [{
+            xtype: 'toolbar',
+            items: [{
+                text: 'Add',
+                iconCls: 'icon-add',
+                handler: onAdd
+            }, '-', {
+                text: 'Delete',
+                iconCls: 'icon-delete',
+                handler: onDelete
+            }]
+        }]  , 
+      columns: [
+          {
+              text: 'Name',
+              width: 100,              
+              hideable: false,
+              dataIndex: 'name',
+              editor: {
+                  xtype: 'textfield',
+                  allowBlank: false
+              }
+          },
+          {
+              text: 'Email Address',
+              flex: 1,            
+              dataIndex: 'email',
+              editor: 'textfield'
+          }      
+      ],                                  
+  });
+  
+  function onAdd(btn,ev) {    
+    // empty record
+    userStore.insert(0, new User());
+    rowEditing.startEdit(0, 0);
+  }
+  
+  function onDelete() {
+    var selection = grid.getView().getSelectionModel().getSelection()[0];
+    if (selection) {
+      userStore.remove(selection);      
+    }
+  }
+  
+});
+</script>
